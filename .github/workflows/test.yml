@@ -40,6 +40,11 @@ jobs:
       - name: Install QADemo dependencies
         working-directory: ecommerce
         run: pnpm install --frozen-lockfile
+      
+      - name: Check Wrangler
+        working-directory: ecommerce
+        run: |
+          pnpm exec wrangler --version
 
       # 6. 启动 QADemo Worker
       - name: Start QADemo
