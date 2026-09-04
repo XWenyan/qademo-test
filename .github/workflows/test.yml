@@ -44,13 +44,13 @@ jobs:
       - name: Check Wrangler
         working-directory: ecommerce
         run: |
-          pnpm exec wrangler --version
+          pnpm --filter @qademo/web exec wrangler --version
 
       # 6. 启动 QADemo Worker
       - name: Start QADemo
         working-directory: ecommerce
         run: |
-          nohup pnpm exec wrangler dev --config=./wrangler.toml > worker.log 2>&1 &
+          nohup pnpm --filter @qademo/web exec wrangler dev --config=./wrangler.toml > worker.log 2>&1 &
           echo $! > worker.pid
 
       # 7. 等待 QADemo 启动完成
