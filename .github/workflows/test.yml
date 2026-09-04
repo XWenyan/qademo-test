@@ -45,7 +45,16 @@ jobs:
         working-directory: ecommerce
         run: |
           pnpm --filter @qademo/web exec wrangler --version
+      # 5.1 构建 QADemo
+      - name: Build QADemo
+        working-directory: ecommerce
+        run: pnpm run build
 
+      - name: Check Wrangler
+        working-directory: ecommerce
+        run: |
+          pnpm --filter @qademo/web exec wrangler --version
+      
       # 6. 启动 QADemo Worker
       - name: Start QADemo
         working-directory: ecommerce
