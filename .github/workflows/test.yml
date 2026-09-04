@@ -1,0 +1,89 @@
+name: QADemo Automated Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取 qademo-test 测试代码
+      - name: Checkout test project
+        uses: actions/checkout@v4
+
+      # 2. 拉取 QADemo 被测项目
+      - name: Checkout QADemo
+        uses: actions/checkout@v4
+        with:
+          repository: Mani-QA/ecommerce
+          path: ecommerce
+
+      # 3. 安装 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 4. 启用 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      # 5. 安装 QADemo 依赖
+      - name: Install QADemo dependencies
+        working-directory: ecommerce
+        run: pnpm install --frozen-lockfile
+
+      # 6. 启动 QADemo Worker
+      - name: Start QADemo
+        working-directory: ecommerce
+        run: |
+          nohup pnpm exec wrangler dev --config=./wrangler.toml > worker.log 2>&1 &
+          echo $! > worker.pid
+
+      # 7. 等待 QADemo 启动完成
+      - name: Wait for QADemo
+        run: |
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:8787/api/products > /dev/null; then
+              echo "QADemo is ready"
+              exit 0
+            fi
+
+            echo "Waiting for QADemo..."
+            sleep 2
+          done
+
+          echo "QADemo failed to start"
+          cat ecommerce/worker.log
+          exit 1
+
+      # 8. 设置 Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 9. 安装 Python 测试依赖
+      - name: Install test dependencies
+        run: pip install -r requirements.txt
+
+      # 10. 安装 Playwright 浏览器
+      - name: Install Playwright browsers
+        run: playwright install --with-deps
+
+      # 11. 执行 pytest
+      - name: Run tests
+        run: pytest -q
+
+      # 12. 测试失败时输出 Worker 日志
+      - name: Show QADemo logs on failure
+        if: failure()
+        run: cat ecommerce/worker.log
