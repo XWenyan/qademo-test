@@ -40,20 +40,30 @@ jobs:
       - name: Install QADemo dependencies
         working-directory: ecommerce
         run: pnpm install --frozen-lockfile
-      
+
+      # 5.1 检查 QADemo 数据库
+      - name: Check QADemo database
+        working-directory: ecommerce
+        run: |
+          pnpm --filter @qademo/web exec wrangler d1 execute qademo-db --local --command="SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+
+      # 5.2 检查测试数据
+      - name: Check test data
+        working-directory: ecommerce
+        run: |
+          pnpm --filter @qademo/web exec wrangler d1 execute qademo-db --local --command="SELECT COUNT(*) AS user_count FROM users;"
+          pnpm --filter @qademo/web exec wrangler d1 execute qademo-db --local --command="SELECT COUNT(*) AS product_count FROM products;"
+
+      # 5.3 检查 Wrangler
       - name: Check Wrangler
         working-directory: ecommerce
         run: |
           pnpm --filter @qademo/web exec wrangler --version
+      
       # 5.1 构建 QADemo
       - name: Build QADemo
         working-directory: ecommerce
         run: pnpm run build
-
-      - name: Check Wrangler
-        working-directory: ecommerce
-        run: |
-          pnpm --filter @qademo/web exec wrangler --version
       
       # 6. 启动 QADemo Worker
       - name: Start QADemo
