@@ -69,6 +69,7 @@ jobs:
       - name: Start QADemo
         working-directory: ecommerce
         run: |
+          touch worker.log
           nohup pnpm --filter @qademo/web exec wrangler dev --config=./wrangler.toml > worker.log 2>&1 &
           echo $! > worker.pid
 
@@ -86,7 +87,16 @@ jobs:
           done
 
           echo "QADemo failed to start"
-          cat ecommerce/worker.log
+
+          if [ -f ecommerce/worker.log ]; then
+            echo "===== QADemo Worker Log ====="
+            cat ecommerce/worker.log
+          else
+            echo "Worker log file does not exist."
+            echo "===== ecommerce directory ====="
+            ls -la ecommerce
+          fi
+
           exit 1
 
       # 8. 设置 Python
@@ -110,4 +120,12 @@ jobs:
       # 12. 测试失败时输出 Worker 日志
       - name: Show QADemo logs on failure
         if: failure()
-        run: cat ecommerce/worker.log
+        run: |
+          if [ -f ecommerce/worker.log ]; then
+            echo "===== QADemo Worker Log ====="
+            cat ecommerce/worker.log
+          else
+            echo "Worker log file does not exist."
+            echo "===== ecommerce directory ====="
+            ls -la ecommerce
+          fi
